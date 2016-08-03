@@ -2,7 +2,7 @@
 
 # file glfwapp.py
 
-import glfw
+import cyglfw3 as glfw
 from OpenGL.GL import glFlush
 
 
@@ -32,22 +32,22 @@ class GlfwApp(object):
     def init_gl(self):
         if self._is_initialized:
             return # only initialize once
-        if not glfw.init():
+        if not glfw.Init():
             raise Exception("GLFW Initialization error")
         # Get OpenGL 4.1 context
-        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
-        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 1)
-        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
+        # glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
+        # glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 1)
+        # glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
         # Double buffered screen mirror stalls VR headset rendering,
         # So use single-buffering
-        glfw.window_hint(glfw.DOUBLEBUFFER, False)
-        glfw.swap_interval(0)
-        self.window = glfw.create_window(self.renderer.window_size[0], self.renderer.window_size[1], self.title, None, None)
+        glfw.WindowHint(glfw.DOUBLEBUFFER, False)
+        glfw.SwapInterval(0)
+        self.window = glfw.CreateWindow(self.renderer.window_size[0], self.renderer.window_size[1], self.title)
         if self.window is None:
-            glfw.terminate()
+            glfw.Terminate()
             raise Exception("GLFW window creation error")
-        glfw.set_key_callback(self.window, self.key_callback)
-        glfw.make_context_current(self.window)
+        glfw.SetKeyCallback(self.window, self.key_callback)
+        glfw.MakeContextCurrent(self.window)
         if self.renderer is not None:
             self.renderer.init_gl()
         self._is_initialized = True
@@ -55,27 +55,27 @@ class GlfwApp(object):
     def render_scene(self):
         "render scene one time"
         self.init_gl() # should be a no-op after the first frame is rendered
-        glfw.make_context_current(self.window)
+        #glfw.MakeContextCurrent(self.window)
         self.renderer.render_scene()
         # Done rendering
-        # glfw.swap_buffers(self.window) # avoid double buffering to avoid stalling
+        glfw.SwapBuffers(self.window) # avoid double buffering to avoid stalling
         glFlush() # single buffering
-        glfw.poll_events()
+        glfw.PollEvents()
 
     def dispose_gl(self):
         if self.window is not None:
-            glfw.make_context_current(self.window)
+            glfw.MakeContextCurrent(self.window)
             if self.renderer is not None:
                 self.renderer.dispose_gl()
-        glfw.terminate()
+        glfw.Terminate()
         self._is_initialized = False
 
     def key_callback(self, window, key, scancode, action, mods):
         "press ESCAPE to quit the application"
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
-            glfw.set_window_should_close(self.window, True)
+            glfw.SetWindowShouldClose(self.window, True)
 
     def run_loop(self):
         "keep rendering until the user says quit"
-        while not glfw.window_should_close(self.window):
+        while not glfw.WindowShouldClose(self.window):
             self.render_scene()

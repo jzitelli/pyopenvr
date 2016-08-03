@@ -978,8 +978,8 @@ class HmdRect2_t(Structure):
 
 class DistortionCoordinates_t(Structure):
     """
-    Used to return the post-distortion UVs for each color channel. 
-    UVs range from 0 to 1 with 0,0 in the upper left corner of the 
+    Used to return the post-distortion UVs for each color channel.
+    UVs range from 0 to 1 with 0,0 in the upper left corner of the
     source render target. The 0,0 to 1,1 range covers a single eye.
     """
 
@@ -992,7 +992,7 @@ class DistortionCoordinates_t(Structure):
 
 class Texture_t(Structure):
     _fields_ = [
-        ("handle", c_void_p),
+        ("handle", c_uint32),
         ("eType", EGraphicsAPIConvention),
         ("eColorSpace", EColorSpace),
     ]
@@ -1169,9 +1169,9 @@ class VREvent_ApplicationLaunch_t(Structure):
 
 class HiddenAreaMesh_t(Structure):
     """
-    The mesh to draw into the stencil (or depth) buffer to perform 
+    The mesh to draw into the stencil (or depth) buffer to perform
     early stencil (or depth) kills of pixels that will never appear on the HMD.
-    This mesh draws on all the pixels that will be hidden after distortion. 
+    This mesh draws on all the pixels that will be hidden after distortion.
     * If the HMD does not provide a visible area mesh pVertexData will be
     NULL and unTriangleCount will be 0.
     """
@@ -1371,14 +1371,14 @@ class NotificationBitmap_t(Structure):
 class COpenVRContext(object):
     def __init__(self):
         self.clear()
-        
+
     def checkClear(self):
         global _vr_token
         if _vr_token != getInitToken():
             self.clear()
             _vr_token = getInitToken()
-            
-    def clear(self):  
+
+    def clear(self):
         self.m_pVRSystem = None
         self.m_pVRChaperone = None
         self.m_pVRChaperoneSetup = None
@@ -1630,7 +1630,7 @@ class IVRSystem(object):
 
     def computeDistortion(self, eEye, fU, fV):
         """
-        Returns the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in 
+        Returns the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in
         the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport.
         """
 
@@ -1641,7 +1641,7 @@ class IVRSystem(object):
     def getEyeToHeadTransform(self, eEye):
         """
         Returns the transform from eye space to the head space. Eye space is the per-eye flavor of head
-        space that provides stereo disparity. Instead of Model * View * Projection the sequence is Model * View * Eye^-1 * Projection. 
+        space that provides stereo disparity. Instead of Model * View * Projection the sequence is Model * View * Eye^-1 * Projection.
         Normally View and Eye^-1 will be multiplied together and treated as View in your application.
         """
 
@@ -1651,9 +1651,9 @@ class IVRSystem(object):
 
     def getTimeSinceLastVsync(self):
         """
-        Returns the number of elapsed seconds since the last recorded vsync event. This 
+        Returns the number of elapsed seconds since the last recorded vsync event. This
         will come from a vsync timer event in the timer if possible or from the application-reported
-          time if that is not available. If no vsync times are available the function will 
+          time if that is not available. If no vsync times are available the function will
           return zero for vsync time and frame counter and return false from the method.
         """
 
@@ -1702,17 +1702,17 @@ class IVRSystem(object):
 
     def getDeviceToAbsoluteTrackingPose(self, eOrigin, fPredictedSecondsToPhotonsFromNow, unTrackedDevicePoseArrayCount, pTrackedDevicePoseArray=None):
         """
-        The pose that the tracker thinks that the HMD will be in at the specified number of seconds into the 
+        The pose that the tracker thinks that the HMD will be in at the specified number of seconds into the
         future. Pass 0 to get the state at the instant the method is called. Most of the time the application should
         calculate the time until the photons will be emitted from the display and pass that time into the method.
-        * This is roughly analogous to the inverse of the view matrix in most applications, though 
+        * This is roughly analogous to the inverse of the view matrix in most applications, though
         many games will need to do some additional rotation or translation on top of the rotation
         and translation provided by the head pose.
         * For devices where bPoseIsValid is true the application can use the pose to position the device
-        in question. The provided array can be any size up to k_unMaxTrackedDeviceCount. 
+        in question. The provided array can be any size up to k_unMaxTrackedDeviceCount.
         * Seated experiences should call this method with TrackingUniverseSeated and receive poses relative
-        to the seated zero pose. Standing experiences should call this method with TrackingUniverseStanding 
-        and receive poses relative to the Chaperone Play Area. TrackingUniverseRawAndUncalibrated should 
+        to the seated zero pose. Standing experiences should call this method with TrackingUniverseStanding
+        and receive poses relative to the Chaperone Play Area. TrackingUniverseRawAndUncalibrated should
         probably not be used unless the application is the Chaperone calibration tool itself, but will provide
         poses relative to the hardware-specific coordinate system in the driver.
         """
@@ -1726,12 +1726,12 @@ class IVRSystem(object):
 
     def resetSeatedZeroPose(self):
         """
-        Sets the zero pose for the seated tracker coordinate system to the current position and yaw of the HMD. After 
-        ResetSeatedZeroPose all GetDeviceToAbsoluteTrackingPose calls that pass TrackingUniverseSeated as the origin 
-        will be relative to this new zero pose. The new zero coordinate system will not change the fact that the Y axis 
-        is up in the real world, so the next pose returned from GetDeviceToAbsoluteTrackingPose after a call to 
+        Sets the zero pose for the seated tracker coordinate system to the current position and yaw of the HMD. After
+        ResetSeatedZeroPose all GetDeviceToAbsoluteTrackingPose calls that pass TrackingUniverseSeated as the origin
+        will be relative to this new zero pose. The new zero coordinate system will not change the fact that the Y axis
+        is up in the real world, so the next pose returned from GetDeviceToAbsoluteTrackingPose after a call to
         ResetSeatedZeroPose may not be exactly an identity matrix.
-        * NOTE: This function overrides the user's previously saved seated zero pose and should only be called as the result of a user action. 
+        * NOTE: This function overrides the user's previously saved seated zero pose and should only be called as the result of a user action.
         Users are also able to set their seated zero pose via the OpenVR Dashboard.
         """
 
@@ -1740,10 +1740,10 @@ class IVRSystem(object):
 
     def getSeatedZeroPoseToStandingAbsoluteTrackingPose(self):
         """
-        Returns the transform from the seated zero pose to the standing absolute tracking system. This allows 
+        Returns the transform from the seated zero pose to the standing absolute tracking system. This allows
         applications to represent the seated origin to used or transform object positions from one coordinate
-        system to the other. 
-        * The seated origin may or may not be inside the Play Area or Collision Bounds returned by IVRChaperone. Its position 
+        system to the other.
+        * The seated origin may or may not be inside the Play Area or Collision Bounds returned by IVRChaperone. Its position
         depends on what the user has set from the Dashboard settings and previous calls to ResetSeatedZeroPose.
         """
 
@@ -1811,9 +1811,9 @@ class IVRSystem(object):
         """
         Returns the device class of a tracked device. If there has not been a device connected in this slot
         since the application started this function will return TrackedDevice_Invalid. For previous detected
-        devices the function will return the previously observed device class. 
+        devices the function will return the previously observed device class.
         * To determine which devices exist on the system, just loop from 0 to k_unMaxTrackedDeviceCount and check
-        the device class. Every device with something other than TrackedDevice_Invalid is associated with an 
+        the device class. Every device with something other than TrackedDevice_Invalid is associated with an
         actual tracked device.
         """
 
@@ -1870,7 +1870,7 @@ class IVRSystem(object):
 
     def getStringTrackedDeviceProperty(self, unDeviceIndex, prop):
         """
-        Returns a string property. If the device index is not valid or the property is not a string type this function will 
+        Returns a string property. If the device index is not valid or the property is not a string type this function will
         return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
         null. Strings will generally fit in buffers of k_unTrackingStringSize characters.
         """
@@ -1890,7 +1890,7 @@ class IVRSystem(object):
 
     def getPropErrorNameFromEnum(self, error):
         """
-        returns a string that corresponds with the specified property error. The string will be the name 
+        returns a string that corresponds with the specified property error. The string will be the name
         of the error enum value for all valid error codes
         """
 
@@ -1911,8 +1911,8 @@ class IVRSystem(object):
     def pollNextEventWithPose(self, eOrigin, uncbVREvent):
         """
         Returns true and fills the event with the next event on the queue if there is one. If there are no events
-        this method returns false. Fills in the pose of the associated tracked device in the provided pose struct. 
-        This pose will always be older than the call to this function and should not be used to render the device. 
+        this method returns false. Fills in the pose of the associated tracked device in the provided pose struct.
+        This pose will always be older than the call to this function and should not be used to render the device.
         uncbVREvent should be the size in bytes of the VREvent_t struct
         """
 
@@ -1955,7 +1955,7 @@ class IVRSystem(object):
 
     def getControllerStateWithPose(self, eOrigin, unControllerDeviceIndex):
         """
-        fills the supplied struct with the current state of the controller and the provided pose with the pose of 
+        fills the supplied struct with the current state of the controller and the provided pose with the pose of
         the controller when the controller state was updated most recently. Use this form if you need a precise controller
         pose as input to your application when the user presses or releases a button.
         """
@@ -1991,7 +1991,7 @@ class IVRSystem(object):
 
     def captureInputFocus(self):
         """
-        Tells OpenVR that this process wants exclusive access to controller button states and button events. Other apps will be notified that 
+        Tells OpenVR that this process wants exclusive access to controller button states and button events. Other apps will be notified that
         they have lost input focus with a VREvent_InputFocusCaptured event. Returns false if input focus could not be captured for
         some reason.
         """
@@ -2002,7 +2002,7 @@ class IVRSystem(object):
 
     def releaseInputFocus(self):
         """
-        Tells OpenVR that this process no longer wants exclusive access to button states and button events. Other apps will be notified 
+        Tells OpenVR that this process no longer wants exclusive access to button states and button events. Other apps will be notified
         that input focus has been released with a VREvent_InputFocusReleased event.
         """
 
@@ -2019,7 +2019,7 @@ class IVRSystem(object):
     def driverDebugRequest(self, unDeviceIndex, pchRequest, pchResponseBuffer, unResponseBufferSize):
         """
         Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k,
-        but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated. 
+        but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated.
         The size of the response including its terminating null is returned.
         """
 
@@ -2029,10 +2029,10 @@ class IVRSystem(object):
 
     def performFirmwareUpdate(self, unDeviceIndex):
         """
-        Performs the actual firmware update if applicable. 
-        The following events will be sent, if VRFirmwareError_None was returned: VREvent_FirmwareUpdateStarted, VREvent_FirmwareUpdateFinished 
+        Performs the actual firmware update if applicable.
+        The following events will be sent, if VRFirmwareError_None was returned: VREvent_FirmwareUpdateStarted, VREvent_FirmwareUpdateFinished
         Use the properties Prop_Firmware_UpdateAvailable_Bool, Prop_Firmware_ManualUpdate_Bool, and Prop_Firmware_ManualUpdateURL_String
-        to figure our whether a firmware update is available, and to figure out whether its a manual update 
+        to figure our whether a firmware update is available, and to figure out whether its a manual update
         Prop_Firmware_ManualUpdateURL_String should point to an URL describing the manual update process
         """
 
@@ -2052,7 +2052,7 @@ class IVRSystem(object):
     def acknowledgeQuit_UserPrompt(self):
         """
         Call this to tell the system that the user is being prompted to save data. This
-        halts the timeout and dismisses the dashboard (if it was up). Applications should be sure to actually 
+        halts the timeout and dismisses the dashboard (if it was up). Applications should be sure to actually
         prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state.
         """
 
@@ -2214,7 +2214,7 @@ class IVRTrackedCamera(object):
         """
         Copies the image frame into a caller's provided buffer. The image data is currently provided as RGBA data, 4 bytes per pixel.
         A caller can provide null for the framebuffer or frameheader if not desired. Requesting the frame header first, followed by the frame buffer allows
-        the caller to determine if the frame as advanced per the frame header sequence. 
+        the caller to determine if the frame as advanced per the frame header sequence.
         If there is no frame available yet, due to initial camera spinup or re-activation, the error will be VRTrackedCameraError_NoFrameAvailable.
         Ideally a caller should be polling at ~16ms intervals
         """
@@ -2309,7 +2309,7 @@ class IVRApplications(object):
 
     def addApplicationManifest(self, pchApplicationManifestFullPath, bTemporary):
         """
-        Adds an application manifest to the list to load when building the list of installed applications. 
+        Adds an application manifest to the list to load when building the list of installed applications.
         Temporary manifests are not automatically loaded
         """
 
@@ -2340,8 +2340,8 @@ class IVRApplications(object):
 
     def getApplicationKeyByIndex(self, unApplicationIndex, pchAppKeyBuffer, unAppKeyBufferLen):
         """
-        Returns the key of the specified application. The index is at least 0 and is less than the return 
-        value of GetApplicationCount(). The buffer should be at least k_unMaxApplicationKeyLength in order to 
+        Returns the key of the specified application. The index is at least 0 and is less than the return
+        value of GetApplicationCount(). The buffer should be at least k_unMaxApplicationKeyLength in order to
         fit the key.
         """
 
@@ -2351,7 +2351,7 @@ class IVRApplications(object):
 
     def getApplicationKeyByProcessId(self, unProcessId, pchAppKeyBuffer, unAppKeyBufferLen):
         """
-        Returns the key of the application for the specified Process Id. The buffer should be at least 
+        Returns the key of the application for the specified Process Id. The buffer should be at least
         k_unMaxApplicationKeyLength in order to fit the key.
         """
 
@@ -2389,7 +2389,7 @@ class IVRApplications(object):
 
     def launchDashboardOverlay(self, pchAppKey):
         """
-        Launches the dashboard overlay application if it is not already running. This call is only valid for 
+        Launches the dashboard overlay application if it is not already running. This call is only valid for
         dashboard overlay applications.
         """
 
@@ -2407,8 +2407,8 @@ class IVRApplications(object):
     def identifyApplication(self, unProcessId, pchAppKey):
         """
         Identifies a running application. OpenVR can't always tell which process started in response
-        to a URL. This function allows a URL handler (or the process itself) to identify the app key 
-        for the now running application. Passing a process ID of 0 identifies the calling process. 
+        to a URL. This function allows a URL handler (or the process itself) to identify the app key
+        for the now running application. Passing a process ID of 0 identifies the calling process.
         The application must be one that's known to the system via a call to AddApplicationManifest.
         """
 
@@ -2550,9 +2550,9 @@ class IVRApplications(object):
     def launchInternalProcess(self, pchBinaryPath, pchArguments, pchWorkingDirectory):
         """
         Starts a subprocess within the calling application. This
-        suppresses all application transition UI and automatically identifies the new executable 
-        as part of the same application. On success the calling process should exit immediately. 
-        If working directory is NULL or "" the directory portion of the binary path will be 
+        suppresses all application transition UI and automatically identifies the new executable
+        as part of the same application. On success the calling process should exit immediately.
+        If working directory is NULL or "" the directory portion of the binary path will be
         the working directory.
         """
 
@@ -2604,7 +2604,7 @@ class IVRChaperone(object):
 
     def getPlayAreaSize(self):
         """
-        Returns the width and depth of the Play Area (formerly named Soft Bounds) in X and Z. 
+        Returns the width and depth of the Play Area (formerly named Soft Bounds) in X and Z.
         Tracking space center (0,0,0) is the center of the Play Area.
         """
 
@@ -2692,9 +2692,9 @@ class IVRChaperoneSetup_FnTable(Structure):
 
 class IVRChaperoneSetup(object):
     """
-    Manages the working copy of the chaperone info. By default this will be the same as the 
-    live copy. Any changes made with this interface will stay in the working copy until 
-    CommitWorkingCopy() is called, at which point the working copy and the live copy will be 
+    Manages the working copy of the chaperone info. By default this will be the same as the
+    live copy. Any changes made with this interface will stay in the working copy until
+    CommitWorkingCopy() is called, at which point the working copy and the live copy will be
     the same again.
     """
 
@@ -2756,7 +2756,7 @@ class IVRChaperoneSetup(object):
 
     def getWorkingCollisionBoundsInfo(self):
         """
-        Returns the number of Quads if the buffer points to null. Otherwise it returns Quads 
+        Returns the number of Quads if the buffer points to null. Otherwise it returns Quads
         into the buffer up to the max specified from the working copy.
         """
 
@@ -2768,7 +2768,7 @@ class IVRChaperoneSetup(object):
 
     def getLiveCollisionBoundsInfo(self):
         """
-        Returns the number of Quads if the buffer points to null. Otherwise it returns Quads 
+        Returns the number of Quads if the buffer points to null. Otherwise it returns Quads
         into the buffer up to the max specified.
         """
 
@@ -2993,7 +2993,7 @@ class IVRCompositor(object):
 
     def clearLastSubmittedFrame(self):
         """
-        Clears the frame that was sent with the last call to Submit. This will cause the 
+        Clears the frame that was sent with the last call to Submit. This will cause the
         compositor to show the grid until Submit is called again.
         """
 
@@ -3044,7 +3044,7 @@ class IVRCompositor(object):
     def fadeToColor(self, fSeconds, fRed, fGreen, fBlue, fAlpha, bBackground):
         """
         Fades the view on the HMD to the specified color. The fade will take fSeconds, and the color values are between
-        0.0 and 1.0. This color is faded on top of the scene based on the alpha parameter. Removing the fade color instantly 
+        0.0 and 1.0. This color is faded on top of the scene based on the alpha parameter. Removing the fade color instantly
         would be FadeToColor( 0.0, 0.0, 0.0, 0.0, 0.0 ).  Values are in un-premultiplied alpha space.
         """
 
@@ -3092,7 +3092,7 @@ class IVRCompositor(object):
 
     def compositorQuit(self):
         """
-        Tells the compositor process to clean up and exit. You do not need to call this function at shutdown. Under normal 
+        Tells the compositor process to clean up and exit. You do not need to call this function at shutdown. Under normal
         circumstances the compositor will manage its own life cycle based on what applications are running.
         """
 
@@ -3375,7 +3375,7 @@ class IVROverlay(object):
 
     def getOverlayImageData(self, ulOverlayHandle, pvBuffer, unBufferSize):
         """
-        Gets the raw image data from an overlay. Overlay image data is always returned as RGBA data, 4 bytes per pixel. If the buffer is not large enough, width and height 
+        Gets the raw image data from an overlay. Overlay image data is always returned as RGBA data, 4 bytes per pixel. If the buffer is not large enough, width and height
         will be set and VROverlayError_ArrayTooSmall is returned.
         """
 
@@ -3387,7 +3387,7 @@ class IVROverlay(object):
 
     def getOverlayErrorNameFromEnum(self, error):
         """
-        returns a string that corresponds with the specified overlay error. The string will be the name 
+        returns a string that corresponds with the specified overlay error. The string will be the name
         of the error enum value for all valid error codes
         """
 
@@ -3482,7 +3482,7 @@ class IVROverlay(object):
         Sets the rendering sort order for the overlay. Overlays are rendered this order:
              Overlays owned by the scene application
              Overlays owned by some other application
-        *	Within a category overlays are rendered lowest sort order to highest sort order. Overlays with the same 
+        *	Within a category overlays are rendered lowest sort order to highest sort order. Overlays with the same
         sort order are rendered back to front base on distance from the HMD.
         *	Sort order defaults to 0.
         """
@@ -3661,7 +3661,7 @@ class IVROverlay(object):
 
     def pollNextOverlayEvent(self, ulOverlayHandle, uncbVREvent):
         """
-        Returns true and fills the event with the next event on the overlay's event queue, if there is one. 
+        Returns true and fills the event with the next event on the overlay's event queue, if there is one.
         If there are no events this method returns false. uncbVREvent should be the size in bytes of the VREvent_t struct
         """
 
@@ -3723,7 +3723,7 @@ class IVROverlay(object):
         """
         Processes mouse input from the specified controller as though it were a mouse pointed at a compositor overlay with the
         specified settings. The controller is treated like a laser pointer on the -z axis. The point where the laser pointer would
-        intersect with the overlay is the mouse position, the trigger is left mouse, and the track pad is right mouse. 
+        intersect with the overlay is the mouse position, the trigger is left mouse, and the track pad is right mouse.
         * Return true if the controller is pointed at the overlay and an event was generated.
         """
 
@@ -3733,7 +3733,7 @@ class IVROverlay(object):
 
     def isHoverTargetOverlay(self, ulOverlayHandle):
         """
-        Returns true if the specified overlay is the hover target. An overlay is the hover target when it is the last overlay "moused over" 
+        Returns true if the specified overlay is the hover target. An overlay is the hover target when it is the last overlay "moused over"
         by the virtual mouse pointer
         """
 
@@ -3797,7 +3797,7 @@ class IVROverlay(object):
 
     def setOverlayRaw(self, ulOverlayHandle, pvBuffer, unWidth, unHeight, unDepth):
         """
-        Separate interface for providing the data as a stream of bytes, but there is an upper bound on data 
+        Separate interface for providing the data as a stream of bytes, but there is an upper bound on data
         that can be sent. This function can only be called by the overlay's renderer process.
         """
 
@@ -3985,8 +3985,8 @@ class IVRRenderModels(object):
     def loadRenderModel_Async(self, pchRenderModelName):
         """
         Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
-        from the Prop_RenderModelName_String property or an absolute path name to a render model on disk. 
-        * The resulting render model is valid until VR_Shutdown() is called or until FreeRenderModel() is called. When the 
+        from the Prop_RenderModelName_String property or an absolute path name to a render model on disk.
+        * The resulting render model is valid until VR_Shutdown() is called or until FreeRenderModel() is called. When the
         application is finished with the render model it should call FreeRenderModel() to free the memory associated
         with the model.
         * The method returns VRRenderModelError_Loading while the render model is still being loaded.
@@ -4372,7 +4372,7 @@ class IVRScreenshots(object):
          VRScreenshotType_StereoPanorama: above/below with left eye
          panorama being the above image.  Image is typically square
          with the panorama being 2x horizontal.
-         
+
          Note that the VR dashboard will call this function when
          the user presses the screenshot binding (currently System
          Button + Trigger).  If Steam is running, the destination
@@ -4517,7 +4517,7 @@ class IVRResources(object):
     def getResourceFullPath(self, pchResourceName, pchResourceTypeDirectory, pchPathBuffer, unBufferLen):
         """
         Provides the full path to the specified resource. Resource names can include named directories for
-        drivers and other things, and this resolves all of those and returns the actual physical path. 
+        drivers and other things, and this resolves all of those and returns the actual physical path.
         pchResourceTypeDirectory is the subdirectory of resources to look in.
         """
 
@@ -4548,7 +4548,7 @@ def init(applicationType):
     Finds the active installation of the VR API and initializes it. The provided path must be absolute
     or relative to the current working directory. These are the local install versions of the equivalent
     functions in steamvr.h and will work without a local Steam install.
-    
+
     This path is to the "root" of the VR API install. That's the directory with
     the "drivers" directory and a platform (i.e. "win32") directory in it, not the directory with the DLL itself.
     """
