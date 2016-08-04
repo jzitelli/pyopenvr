@@ -14,6 +14,7 @@ Minimal glfw programming example which colored OpenGL cube scene that can be clo
 
 if __name__ == "__main__":
     renderer = OpenVrGlRenderer(multisample=2)
+    renderer.do_mirror = True
     renderer.append(ColorCubeActor())
     controllers = TrackedDevicesActor(renderer.poses)
     controllers.show_controllers_only = False
