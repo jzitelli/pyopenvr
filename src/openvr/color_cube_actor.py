@@ -2,6 +2,8 @@
 
 # file color_cube_actor.py
 
+from ctypes import c_uint32, byref
+
 from textwrap import dedent
 
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
@@ -116,5 +118,5 @@ class ColorCubeActor(object):
     def dispose_gl(self):
         glDeleteProgram(self.shader)
         self.shader = 0
-        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteVertexArrays(1, c_uint32(self.vao))
         self.vao = 0

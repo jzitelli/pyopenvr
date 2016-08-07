@@ -4,7 +4,7 @@
 
 import time
 from textwrap import dedent
-from ctypes import cast, c_float, c_void_p, sizeof
+from ctypes import cast, c_float, c_void_p, sizeof, c_uint32, byref
 
 import numpy
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
@@ -104,7 +104,7 @@ class TrackedDeviceMesh(object):
         glBindVertexArray(0)
         
     def dispose_gl(self):
-        glDeleteVertexArrays(1, (self.vao,))
+        glDeleteVertexArrays(1, byref(c_uint32(self.vao)))
         self.vbo = 0
         self.vertexPositions.delete()
         self.indexPositions.delete()     

@@ -2,6 +2,11 @@
 
 # file hello_glfw.py
 
+import OpenGL
+OpenGL.ERROR_CHECKING = False
+OpenGL.ERROR_LOGGING = False
+OpenGL.ERROR_ON_COPY = True
+
 from openvr.glframework.cyglfw3_app import CyGLFW3App
 from openvr.gl_renderer import OpenVrGlRenderer
 from openvr.color_cube_actor import ColorCubeActor
@@ -14,6 +19,7 @@ Minimal glfw programming example which colored OpenGL cube scene that can be clo
 
 if __name__ == "__main__":
     renderer = OpenVrGlRenderer(multisample=2)
+    renderer.do_mirror = True
     renderer.append(ColorCubeActor())
     controllers = TrackedDevicesActor(renderer.poses)
     controllers.show_controllers_only = False
