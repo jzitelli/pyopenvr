@@ -1,9 +1,10 @@
 #!/bin/env python
 
 # file openvr_gl_renderer.py
-from ctypes import c_uint32
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
+#from OpenGL.raw.GL.VERSION.GL_3_0 import *
 import numpy
+from numpy.ctypeslib import as_ctypes
 
 import openvr
 
@@ -95,9 +96,9 @@ class OpenVrFramebuffer(object):
         # OpenVR texture data
         self.texture = openvr.Texture_t()
         if self.multisample > 0:
-            self.texture.handle = self.resolve_texture_id
+            self.texture.handle = as_ctypes(self.resolve_texture_id)
         else:
-            self.texture.handle = self.texture_id
+            self.texture.handle = as_ctypes(self.texture_id)
         self.texture.eType = openvr.API_OpenGL
         self.texture.eColorSpace = openvr.ColorSpace_Gamma
         
@@ -114,12 +115,12 @@ class OpenVrFramebuffer(object):
         
     def dispose_gl(self):
         glDeleteTextures(self.texture_id)
-        glDeleteRenderbuffers(1, c_uint32(self.depth_buffer))
-        glDeleteFramebuffers(1, c_uint32(self.fb))
+        glDeleteRenderbuffers(1, as_ctypes(self.depth_buffer))
+        glDeleteFramebuffers(1, as_ctypes(self.fb))
         self.fb = 0
         if self.multisample > 0:
             glDeleteTextures(self.resolve_texture_id)
-            glDeleteFramebuffers(1, c_uint32(self.resolve_fb))
+            glDeleteFramebuffers(1, as_ctypes(self.resolve_fb))
 
 
 class OpenVrGlRenderer(list):

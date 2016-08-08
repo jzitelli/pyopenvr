@@ -992,7 +992,7 @@ class DistortionCoordinates_t(Structure):
 
 class Texture_t(Structure):
     _fields_ = [
-        ("handle", c_uint32),
+        ("handle", c_uint),
         ("eType", EGraphicsAPIConvention),
         ("eColorSpace", EColorSpace),
     ]
