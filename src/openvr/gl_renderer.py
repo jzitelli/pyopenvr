@@ -1,7 +1,7 @@
 #!/bin/env python
 
 # file openvr_gl_renderer.py
-from ctypes import c_uint32, byref
+from ctypes import c_uint32
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
 import numpy
 
