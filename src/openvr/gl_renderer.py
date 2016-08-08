@@ -1,7 +1,7 @@
 #!/bin/env python
 
 # file openvr_gl_renderer.py
-
+from ctypes import c_uint32, byref
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
 import numpy
 
@@ -113,13 +113,13 @@ class OpenVrFramebuffer(object):
         openvr.VRCompositor().submit(eye, self.texture)
         
     def dispose_gl(self):
-        glDeleteTextures([self.texture_id])
-        glDeleteRenderbuffers(1, [self.depth_buffer])
-        glDeleteFramebuffers(1, [self.fb])
+        glDeleteTextures(self.texture_id)
+        glDeleteRenderbuffers(1, c_uint32(self.depth_buffer))
+        glDeleteFramebuffers(1, c_uint32(self.fb))
         self.fb = 0
         if self.multisample > 0:
-            glDeleteTextures([self.resolve_texture_id])
-            glDeleteFramebuffers(1, [self.resolve_fb])
+            glDeleteTextures(self.resolve_texture_id)
+            glDeleteFramebuffers(1, c_uint32(self.resolve_fb))
 
 
 class OpenVrGlRenderer(list):
