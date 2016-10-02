@@ -126,7 +126,7 @@ class OpenVrFramebuffer(object):
 class OpenVrGlRenderer(list):
     "Renders to virtual reality headset using OpenVR and OpenGL APIs"
 
-    def __init__(self, actor=None, window_size=(800,600), multisample=0):
+    def __init__(self, actor=None, window_size=(800,600), multisample=0, do_mirror=False):
         self.vr_system = None
         self.left_fb = None
         self.right_fb = None
@@ -139,7 +139,7 @@ class OpenVrGlRenderer(list):
                 self.extend(actor)
             except TypeError:
                 self.append(actor)
-        self.do_mirror = False
+        self.do_mirror = do_mirror
         self.multisample = multisample      
 
     def init_gl(self):
