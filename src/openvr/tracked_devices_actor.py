@@ -4,7 +4,7 @@
 
 import time
 from textwrap import dedent
-from ctypes import cast, c_float, c_void_p, sizeof, c_uint32, byref
+from ctypes import cast, c_float, c_void_p, sizeof, c_uint32, byref, POINTER
 
 import numpy
 from OpenGL.GL import *  # @UnusedWildImport # this comment squelches an IDE warning
@@ -14,6 +14,8 @@ from OpenGL.GL.EXT.texture_filter_anisotropic import GL_TEXTURE_MAX_ANISOTROPY_E
 
 import openvr
 from openvr.gl_renderer import matrixForOpenVrMatrix
+
+c_float_p = POINTER(c_float)
 
 """
 Tracked item (controllers, lighthouses, etc) actor for "hello world" openvr apps
@@ -87,16 +89,18 @@ class TrackedDeviceMesh(object):
         fLargest = glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT )
         glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest )
         glBindTexture(GL_TEXTURE_2D, 0)
-
+        self.modelview0 = numpy.empty((4,4), dtype=numpy.float32)
+        self.model0 = numpy.eye(4, dtype=numpy.float32)
+        
     def display_gl(self, modelview, projection, pose):
         controller_X_room = pose.mDeviceToAbsoluteTracking
-        controller_X_room = matrixForOpenVrMatrix(controller_X_room)
-        modelview0 = controller_X_room * modelview
-        # Repack before use, just in case
-        modelview0 = numpy.asarray(numpy.matrix(modelview0, dtype=numpy.float32))
+        model0 = self.model0
+        modelview0 = self.modelview0
+        model0[:,:3] = numpy.ctypeslib.as_array(cast(controller_X_room.m, c_float_p),
+                                                shape=(3,4)).T
+        model0.dot(modelview, out=modelview0)        
         glUniformMatrix4fv(4, 1, False, modelview0)
-        normal_matrix = numpy.asarray(controller_X_room)
-        glUniformMatrix4fv(8, 1, False, normal_matrix)
+        glUniformMatrix4fv(8, 1, False, model0)
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.diffuse_texture)
         glBindVertexArray(self.vao)
