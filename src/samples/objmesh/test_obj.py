@@ -30,13 +30,18 @@ glfw programming example with colored mouse brain scene that can be closed by pr
 class Vec3(object):
     def __init__(self, value=(0.0, 0.0, 0.0,)):
         self._data = list(value[0:3])
-    
+
     def __add__(self, rhs):
         result = Vec3(self)
         result += rhs
         return result
 
     def __truediv__(self, rhs):
+        result = Vec3(self)
+        result /= rhs
+        return result
+
+    def __div__(self, rhs):
         result = Vec3(self)
         result /= rhs
         return result
@@ -48,8 +53,13 @@ class Vec3(object):
         for i in range(3):
             self._data[i] += rhs[i]
         return self
-            
+
     def __itruediv__(self, rhs):
+        for i in range(3):
+            self._data[i] /= rhs
+        return self
+
+    def __idiv__(self, rhs):
         for i in range(3):
             self._data[i] /= rhs
         return self
@@ -63,7 +73,7 @@ class Vec3(object):
         for i in range(3):
             self._data[i] -= rhs[i]
         return self
-    
+
     def __len__(self):
         return 3
 
@@ -85,7 +95,7 @@ class Vec3(object):
         result = Vec3(self)
         result *= lhs # Assume multiplication is commutative...
         return result
-    
+
     def __setitem__(self, index, value):
         self._data[index] = value
 
@@ -96,7 +106,7 @@ class Vec3(object):
 
     def __str__(self):
         return str(self._data)
-    
+
     def dot(self, rhs):
         result = 0.0
         for i in range(3):
@@ -105,7 +115,7 @@ class Vec3(object):
 
     def norm(self):
         return self.norm_squared() ** 0.5
-            
+
     def norm_squared(self):
         return self.dot(self)
 
@@ -123,7 +133,7 @@ class MyTransform(object):
 
     def __getitem__(self, key):
         return self._m[key]
-        
+
     def __iadd__(self, rhs):
         self._m += rhs
 
@@ -142,42 +152,42 @@ class MyTransform(object):
     def __mul__(self, rhs):
         "matrix multiplication"
         return MyTransform(numpy.dot(self._m, rhs))
-    
+
     def __neg__(self):
         return MyTransform(-self._m)
-    
+
     def __pos__(self):
         return self
-    
+
     def __radd__(self, lhs):
         return MyTransform(self._m + lhs)
 
     def __rmul__(self, lhs):
         "matrix multiplication"
         return MyTransform(numpy.dot(lhs, self._m))
-    
+
     def __rsub__(self, lhs):
         return MyTransform(lhs - self._m)
 
     def __setitem__(self, key, value):
         self._m[key] = value
-    
+
     def __sub__(self, rhs):
         return MyTransform(self._m - rhs)
 
     @staticmethod
     def fromOpenVrMatrix34(mat):
-        return MyTransform( 
+        return MyTransform(
                 ((mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0),
-                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0), 
-                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0), 
+                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0),
+                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0),
                  (mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0),)
                 )
 
     def pack(self):
         "create a packed copy, ready for use by OpenGL calls"
         return numpy.asarray(self._m, dtype=numpy.float32)
-        
+
     @staticmethod
     def scale(s):
         return MyTransform( (
@@ -185,7 +195,7 @@ class MyTransform(object):
                              (0, s, 0, 0),
                              (0, 0, s, 0),
                              (0, 0, 0, 1),) )
-    
+
     @staticmethod
     def translation(tvec):
         return MyTransform( (
@@ -193,7 +203,7 @@ class MyTransform(object):
                              (0, 1, 0, 0),
                              (0, 0, 1, 0),
                              (tvec[0], tvec[1], tvec[2], 1),) )
-    
+
     def transpose(self):
         return MyTransform(self._m.T)
 
@@ -278,7 +288,7 @@ class ObjMesh(object):
         self.vertexPositions = vbo.VBO(
             numpy.array(vtx, dtype=numpy.float32))
         self.indexPositions = vbo.VBO(
-            numpy.array(idx, dtype=numpy.uint32), 
+            numpy.array(idx, dtype=numpy.uint32),
             target=GL_ELEMENT_ARRAY_BUFFER)
         self.vertexPositions.bind()
         self.indexPositions.bind()
@@ -290,15 +300,15 @@ class ObjMesh(object):
             glEnableVertexAttribArray(1)
             glVertexAttribPointer(1, 3, GL_FLOAT, False, floats_per_vertex * fsize, cast(3 * fsize, c_void_p))
         glBindVertexArray(0)
-        # 
+        #
         vertex_shader = compileShader(dedent(
             """\
             #version 450 core
             #line 212
-            
+
             layout(location = 0) in vec3 in_Position;
             layout(location = 1) in vec3 in_Normal;
-            
+
             layout(location = 0) uniform mat4 projectionMatrix = mat4(1);
             layout(location = 4) uniform mat4 modelMatrix = mat4(1);
             layout(location = 8) uniform mat4 viewMatrix = mat4(1);
@@ -306,13 +316,13 @@ class ObjMesh(object):
             const mat4 scale = mat4(mat3(0.0001)); // convert micrometers to millimeters
 
             out vec3 normal;
-            
+
             void main() {
               gl_Position = projectionMatrix * viewMatrix * modelMatrix * scale * vec4(in_Position, 1.0);
               mat3 normalMatrix = transpose(inverse(mat3(modelMatrix * scale)));
               normal = normalize(normalMatrix * in_Normal);
             }
-            """), 
+            """),
             GL_VERTEX_SHADER)
         fragment_shader = compileShader(dedent(
             """\
@@ -321,25 +331,25 @@ class ObjMesh(object):
 
             in vec3 normal;
             out vec4 fragColor;
-            
+
             void main() {
               // fragColor = vec4(0.1, 0.8, 0.1, 1.0);
               vec3 norm_color = 0.5 * (normalize(normal) + vec3(1));
               fragColor = vec4(norm_color, 1);
             }
-            """), 
+            """),
             GL_FRAGMENT_SHADER)
         self.shader = compileProgram(vertex_shader, fragment_shader)
 
     def display_gl(self, modelview, projection):
         glUseProgram(self.shader)
         glUniformMatrix4fv(0, 1, False, projection)
-        
+
         # TODO: Adjust modelview matrix
         # modelview0 = self.model_matrix * modelview
         # modelview0 = numpy.asarray(numpy.matrix(modelview0, dtype=numpy.float32))
         # print(modelview0[3,0])
-        
+
         glUniformMatrix4fv(4, 1, False, self.model_matrix.pack())
         glUniformMatrix4fv(8, 1, False, MyTransform(modelview).pack())
         glBindVertexArray(self.vao)
@@ -351,7 +361,7 @@ class ObjMesh(object):
         self.vao = 0
         if self.vertexPositions is not None:
             self.vertexPositions.delete()
-            self.indexPositions.delete()     
+            self.indexPositions.delete()
 
     def load_file_stream(self, file_stream):
         for line in file_stream:
@@ -365,7 +375,7 @@ class ControllerState(object):
         self.device_index = None
         self.current_pose = None
         self.previous_pose = None
-        
+
     def check_drag(self, poses):
         if self.device_index is None:
             return
@@ -395,7 +405,7 @@ class ControllerState(object):
         self.previous_pose = openvr.TrackedDevicePose_t(self.current_pose.mDeviceToAbsoluteTracking)
         self.previous_pose.bPoseIsValid = self.current_pose.bPoseIsValid
         return result
-    
+
 
 class ProceduralNoiseShader(object):
     def __init__(self):
@@ -403,7 +413,7 @@ class ProceduralNoiseShader(object):
                 """\
                 #version 450 core
                 #line 320
-                
+
                 //
                 // Description : Array and textureless GLSL 2D simplex noise function.
                 //      Author : Ian McEwan, Ashima Arts.
@@ -413,48 +423,48 @@ class ProceduralNoiseShader(object):
                 //               Distributed under the MIT License. See LICENSE file.
                 //               https://github.com/ashima/webgl-noise
                 //               https://github.com/stegu/webgl-noise
-                // 
-                
+                //
+
                 vec3 mod289(vec3 x) {
                   return x - floor(x * (1.0 / 289.0)) * 289.0;
                 }
-                
+
                 vec2 mod289(vec2 x) {
                   return x - floor(x * (1.0 / 289.0)) * 289.0;
                 }
-                
+
                 vec3 permute(vec3 x) {
                   return mod289(((x*34.0)+1.0)*x);
                 }
-                
+
                 vec4 mod289(vec4 x) {
                   return x - floor(x * (1.0 / 289.0)) * 289.0;
                 }
-                
+
                 vec4 permute(vec4 x) {
                      return mod289(((x*34.0)+1.0)*x);
                 }
-                
+
                 vec4 taylorInvSqrt(vec4 r)
                 {
                   return 1.79284291400159 - 0.85373472095314 * r;
                 }
-                
+
                 float snoise(vec3 v)
-                  { 
+                  {
                   const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
                   const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
-                
+
                 // First corner
                   vec3 i  = floor(v + dot(v, C.yyy) );
                   vec3 x0 =   v - i + dot(i, C.xxx) ;
-                
+
                 // Other corners
                   vec3 g = step(x0.yzx, x0.xyz);
                   vec3 l = 1.0 - g;
                   vec3 i1 = min( g.xyz, l.zxy );
                   vec3 i2 = max( g.xyz, l.zxy );
-                
+
                   //   x0 = x0 - 0.0 + 0.0 * C.xxx;
                   //   x1 = x0 - i1  + 1.0 * C.xxx;
                   //   x2 = x0 - i2  + 2.0 * C.xxx;
@@ -462,56 +472,56 @@ class ProceduralNoiseShader(object):
                   vec3 x1 = x0 - i1 + C.xxx;
                   vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
                   vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
-                
+
                 // Permutations
-                  i = mod289(i); 
-                  vec4 p = permute( permute( permute( 
+                  i = mod289(i);
+                  vec4 p = permute( permute( permute(
                              i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-                           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
                            + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-                
+
                 // Gradients: 7x7 points over a square, mapped onto an octahedron.
                 // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
                   float n_ = 0.142857142857; // 1.0/7.0
                   vec3  ns = n_ * D.wyz - D.xzx;
-                
+
                   vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
-                
+
                   vec4 x_ = floor(j * ns.z);
                   vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
-                
+
                   vec4 x = x_ *ns.x + ns.yyyy;
                   vec4 y = y_ *ns.x + ns.yyyy;
                   vec4 h = 1.0 - abs(x) - abs(y);
-                
+
                   vec4 b0 = vec4( x.xy, y.xy );
                   vec4 b1 = vec4( x.zw, y.zw );
-                
+
                   //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
                   //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
                   vec4 s0 = floor(b0)*2.0 + 1.0;
                   vec4 s1 = floor(b1)*2.0 + 1.0;
                   vec4 sh = -step(h, vec4(0.0));
-                
+
                   vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
                   vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-                
+
                   vec3 p0 = vec3(a0.xy,h.x);
                   vec3 p1 = vec3(a0.zw,h.y);
                   vec3 p2 = vec3(a1.xy,h.z);
                   vec3 p3 = vec3(a1.zw,h.w);
-                
+
                 //Normalise gradients
                   vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
                   p0 *= norm.x;
                   p1 *= norm.y;
                   p2 *= norm.z;
                   p3 *= norm.w;
-                
+
                 // Mix final noise value
                   vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
                   m = m * m;
-                  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
+                  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
                                                 dot(p2,x2), dot(p3,x3) ) );
                 }
 
@@ -524,7 +534,7 @@ class ProceduralNoiseShader(object):
                 // First corner
                   vec2 i  = floor(v + dot(v, C.yy) );
                   vec2 x0 = v -   i + dot(i, C.xx);
-                
+
                 // Other corners
                   vec2 i1;
                   //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0
@@ -535,37 +545,37 @@ class ProceduralNoiseShader(object):
                   // x2 = x0 - 1.0 + 2.0 * C.xx ;
                   vec4 x12 = x0.xyxy + C.xxzz;
                   x12.xy -= i1;
-                
+
                 // Permutations
                   i = mod289(i); // Avoid truncation effects in permutation
                   vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
                         + i.x + vec3(0.0, i1.x, 1.0 ));
-                
+
                   vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
                   m = m*m ;
                   m = m*m ;
-                
+
                 // Gradients: 41 points uniformly over a line, mapped onto a diamond.
                 // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
-                
+
                   vec3 x = 2.0 * fract(p * C.www) - 1.0;
                   vec3 h = abs(x) - 0.5;
                   vec3 ox = floor(x + 0.5);
                   vec3 a0 = x - ox;
-                
+
                 // Normalise gradients implicitly by scaling m
                 // Approximation of: m *= inversesqrt( a0*a0 + h*h );
                   m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-                
+
                 // Compute final noise value at P
                   vec3 g;
                   g.x  = a0.x  * x0.x  + h.x  * x0.y;
                   g.yz = a0.yz * x12.xz + h.yz * x12.yw;
                   return 130.0 * dot(m, g);
                 }
-                
+
                 float fractal_noise(vec2 texCoord, int nlevels) {
-                    if (nlevels < 1) 
+                    if (nlevels < 1)
                         return 0.0;
                     const float w = 0.5;
                     float result = 0;
@@ -576,7 +586,7 @@ class ProceduralNoiseShader(object):
                 }
 
                 float fractal_noise(vec3 texCoord, int nlevels) {
-                    if (nlevels < 1) 
+                    if (nlevels < 1)
                         return 0.0;
                     const float w = 0.5;
                     float result = 0;
@@ -627,7 +637,7 @@ class ProceduralNoiseShader(object):
                         // return fractal_noise(texCoord, 1); // needs filtering
                     }
                 }
-                """), 
+                """),
             GL_FRAGMENT_SHADER)
 
 
@@ -636,30 +646,30 @@ class FloorActor(object):
     def __init__(self):
         self.shader = 0
         self.vao = 0
-        
+
     def init_gl(self):
         vertex_shader = compileShader(dedent(
                 """
                 #version 450 core
                 #line 563
-                
+
                 layout(location = 0) uniform mat4 Projection = mat4(1);
                 layout(location = 4) uniform mat4 ModelView = mat4(1);
-                
+
                 const vec3 FLOOR_QUAD[4] = vec3[4](
                     vec3(-1, 0, -1),
                     vec3(-1, 0, +1),
                     vec3(+1, 0, +1),
                     vec3(+1, 0, -1)
                 );
-                
+
                 const int FLOOR_INDICES[6] = int[6](
                     2, 1, 0,
                     0, 3, 2
                 );
-                
+
                 out vec2 texCoord;
-                
+
                 void main() {
                     int vertexIndex = FLOOR_INDICES[gl_VertexID];
                     vec3 v = FLOOR_QUAD[vertexIndex];
@@ -676,10 +686,10 @@ class FloorActor(object):
 
                 in vec2 texCoord; // Floor texture coordinate in meters
                 out vec4 FragColor;
-                
+
                 float filtered_noise(in vec2 texCoord, in float detail);
 
-                void main() 
+                void main()
                 {
                     // shift texture coordinate so origin artifact is probably far away,
                     // and shift intensity from range [-1,1] to range [0,1]
@@ -690,7 +700,7 @@ class FloorActor(object):
                     vec3 color = mix(color2, color1, noise);
                     FragColor = vec4(color, 1.0);
                 }
-                """), 
+                """),
             GL_FRAGMENT_SHADER)
         self.shader = compileProgram(vertex_shader, fragment_shader, ProceduralNoiseShader().fragment_shader)
         #
@@ -704,7 +714,7 @@ class FloorActor(object):
         glUniformMatrix4fv(4, 1, False, modelview)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     def dispose_gl(self):
         glDeleteProgram(self.shader)
         self.shader = 0
@@ -717,30 +727,30 @@ class SkyActor(object):
     def __init__(self):
         self.shader = 0
         self.vao = 0
-        
+
     def init_gl(self):
         vertex_shader = compileShader(dedent(
                 """
                 #version 450 core
                 #line 644
-                
+
                 layout(location = 0) uniform mat4 Projection = mat4(1);
                 layout(location = 4) uniform mat4 ViewMatrix = mat4(1);
-                
+
                 const vec4 SCREEN_QUAD[4] = vec4[4](
                     vec4(-1, -1, 0, 1),
                     vec4(-1, +1, 0, 1),
                     vec4(+1, +1, 0, 1),
                     vec4(+1, -1, 0, 1));
-                
+
                 const int SCREEN_INDICES[6] = int[6](
                     0, 1, 2,
                     0, 3, 2
                 );
-                
+
                 out mat4 dirFromNdc;
                 out vec4 ndc;
-                
+
                 void main() {
                     int vertexIndex = SCREEN_INDICES[gl_VertexID];
                     vec4 v = SCREEN_QUAD[vertexIndex];
@@ -759,14 +769,14 @@ class SkyActor(object):
                 in vec4 ndc;
                 // in vec3 view_direction; // Floor texture coordinate in meters
                 out vec4 FragColor;
-                
+
                 // float filtered_noise(in vec2 texCoord, in float detail);
                 float fractal_noise(vec3 texCoord, int nlevels);
 
 
-                void main() 
+                void main()
                 {
-                    vec4 d = dirFromNdc*ndc;                    
+                    vec4 d = dirFromNdc*ndc;
                     vec3 view_dir = normalize(d.xyz/d.w);
                     vec3 zenith_color = vec3(0.2, 0.2, 1.0); // deep blue
                     vec3 horizon_color = vec3(0.80, 0.80, 1.0); // pale blue
@@ -779,7 +789,7 @@ class SkyActor(object):
                     FragColor = vec4(color, 1.0);
                     // FragColor = vec4 (1.0, 0.8, 0.8, 1.0); // pink
                 }
-                """), 
+                """),
             GL_FRAGMENT_SHADER)
         self.shader = compileProgram(vertex_shader, fragment_shader, ProceduralNoiseShader().fragment_shader)
         #
@@ -794,7 +804,7 @@ class SkyActor(object):
         glUniformMatrix4fv(4, 1, False, modelview)
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, 6)
-    
+
     def dispose_gl(self):
         glDeleteProgram(self.shader)
         self.shader = 0
@@ -804,7 +814,7 @@ class SkyActor(object):
 
 class SpatialInteractor(object):
     "Composite interactor consisting of both controllers plus maybe other inputs"
-    
+
     def __init__(self):
         self.translation_history = collections.deque() # array of translation increments
         self.max_history_size = 100
@@ -820,11 +830,11 @@ class SpatialInteractor(object):
         while openvr.VRSystem().pollNextEvent(new_event):
             self._check_controller_drag(new_event)
         now_is_dragging = self.left_controller.is_dragging or self.right_controller.is_dragging
-        
+
         xform = self._compute_controllers_transform()
         if xform is not None:
             obj.model_matrix *= xform
-        
+
         # Check for drag begin/end
         if self.is_dragging and not now_is_dragging:
             # print ("drag released!")
@@ -850,7 +860,7 @@ class SpatialInteractor(object):
                     dx = self.speed * dt * self.direction
                     obj.model_matrix *= MyTransform.translation(dx)
         self.previous_update_time = time.time()
-                
+
         # Remember drag state
         self.is_dragging = now_is_dragging
 
@@ -946,7 +956,7 @@ class SpatialInteractor(object):
             self.translation_history.append( (translation, time_stamp,) )
             while len(self.translation_history) > self.max_history_size:
                 self.translation_history.popleft()
-        
+
         return result
 
 if __name__ == "__main__":
@@ -973,4 +983,3 @@ if __name__ == "__main__":
             # Update controller drag state when buttons are pushed
             interactor.update_controller_states()
             # update_scene_geometry(interactor)
-
