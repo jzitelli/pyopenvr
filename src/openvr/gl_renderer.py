@@ -13,30 +13,30 @@ Renders OpenGL scenes to virtual reality headsets using OpenVR API
 """
 
 
-# TODO: matrixForOpenVrMatrix() is not general, it is specific the perspective and 
+# TODO: matrixForOpenVrMatrix() is not general, it is specific the perspective and
 # modelview matrices used in this example
 def matrixForOpenVrMatrix(mat):
     if len(mat.m) == 4: # HmdMatrix44_t?
         result = numpy.matrix(
                 ((mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0]),
-                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1]), 
-                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2]), 
+                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1]),
+                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2]),
                  (mat.m[0][3], mat.m[1][3], mat.m[2][3], mat.m[3][3]),)
             , numpy.float32)
         return result
     elif len(mat.m) == 3: # HmdMatrix34_t?
         result = numpy.matrix(
                 ((mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0),
-                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0), 
-                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0), 
+                 (mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0),
+                 (mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0),
                  (mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0),)
-            , numpy.float32)  
+            , numpy.float32)
         return result
 
 
 class OpenVrFramebuffer(object):
     "Framebuffer for rendering one eye"
-    
+
     def __init__(self, width, height, multisample = 0):
         self.fb = 0
         self.depth_buffer = 0
@@ -45,7 +45,7 @@ class OpenVrFramebuffer(object):
         self.height = height
         self.compositor = None
         self.multisample = multisample
-        
+
     def init_gl(self):
         # Set up framebuffer and render textures
         self.fb = glGenFramebuffers(1)
@@ -92,27 +92,27 @@ class OpenVrFramebuffer(object):
             if status != GL_FRAMEBUFFER_COMPLETE:
                 glBindFramebuffer(GL_FRAMEBUFFER, 0)
                 raise Exception("Incomplete framebuffer")
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)   
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
         # OpenVR texture data
         self.texture = openvr.Texture_t()
         if self.multisample > 0:
             self.texture.handle = as_ctypes(self.resolve_texture_id)
         else:
             self.texture.handle = as_ctypes(self.texture_id)
-        self.texture.eType = openvr.API_OpenGL
+        self.texture.eType = openvr.TextureType_OpenGL
         self.texture.eColorSpace = openvr.ColorSpace_Gamma
-        
+
     def submit(self, eye):
         if self.multisample > 0:
             glBindFramebuffer(GL_READ_FRAMEBUFFER, self.fb)
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, self.resolve_fb)
-            glBlitFramebuffer(0, 0, self.width, self.height, 
+            glBlitFramebuffer(0, 0, self.width, self.height,
                               0, 0, self.width, self.height,
                               GL_COLOR_BUFFER_BIT, GL_LINEAR)
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0)
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
         openvr.VRCompositor().submit(eye, self.texture)
-        
+
     def dispose_gl(self):
         glDeleteTextures(self.texture_id)
         glDeleteRenderbuffers(1, as_ctypes(self.depth_buffer))
@@ -140,7 +140,7 @@ class OpenVrGlRenderer(list):
             except TypeError:
                 self.append(actor)
         self.do_mirror = do_mirror
-        self.multisample = multisample      
+        self.multisample = multisample
 
     def init_gl(self):
         "allocate OpenGL resources"
@@ -150,20 +150,18 @@ class OpenVrGlRenderer(list):
         self.right_fb = OpenVrFramebuffer(w, h, multisample=self.multisample)
         self.compositor = openvr.VRCompositor()
         if self.compositor is None:
-            raise Exception("Unable to create compositor") 
+            raise Exception("Unable to create compositor")
         self.left_fb.init_gl()
         self.right_fb.init_gl()
         # Compute projection matrix
         zNear = 0.2
         zFar = 500.0
         self.projection_left = numpy.asarray(matrixForOpenVrMatrix(self.vr_system.getProjectionMatrix(
-                openvr.Eye_Left, 
-                zNear, zFar, 
-                openvr.API_OpenGL)))
+                openvr.Eye_Left,
+                zNear, zFar)))
         self.projection_right = numpy.asarray(matrixForOpenVrMatrix(self.vr_system.getProjectionMatrix(
-                openvr.Eye_Right, 
-                zNear, zFar, 
-                openvr.API_OpenGL)))
+                openvr.Eye_Right,
+                zNear, zFar)))
         self.view_left = matrixForOpenVrMatrix(
                 self.vr_system.getEyeToHeadTransform(openvr.Eye_Left)).I # head_X_eye in Kane notation
         self.view_right = matrixForOpenVrMatrix(
@@ -206,7 +204,7 @@ class OpenVrGlRenderer(list):
         self.right_fb.submit(openvr.Eye_Right)
         # self.compositor.submit(openvr.Eye_Right, self.right_fb.texture)
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
-        
+
     def display_gl(self, modelview, projection):
         glClearColor(0.5, 0.5, 0.5, 0.0) # gray background
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
