@@ -96,9 +96,9 @@ class OpenVrFramebuffer(object):
         # OpenVR texture data
         self.texture = openvr.Texture_t()
         if self.multisample > 0:
-            self.texture.handle = as_ctypes(self.resolve_texture_id)
+            self.texture.handle = self.resolve_texture_id #as_ctypes(self.resolve_texture_id)
         else:
-            self.texture.handle = as_ctypes(self.texture_id)
+            self.texture.handle = self.texture_id #as_ctypes(self.texture_id)
         self.texture.eType = openvr.TextureType_OpenGL
         self.texture.eColorSpace = openvr.ColorSpace_Gamma
 
